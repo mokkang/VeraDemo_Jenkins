@@ -82,7 +82,7 @@ pipeline {
                     withMaven(maven:'maven-3') {
                         script {
                             if(isUnix() == true) {
-                                sh "curl -sSL https://download.sourceclear.com/ci.sh | sh"
+                                sh "curl -sSL https://download.sourceclear.com/ci.sh | sh -s -- scan . --update-advisor --allow-dirty"
 
                                 // debug, no upload
                                 //sh "curl -sSL https://download.sourceclear.com/ci.sh | DEBUG=1 sh -s -- scan --no-upload"
@@ -121,7 +121,7 @@ pipeline {
                                         unzip pipeline-scan-LATEST.zip pipeline-scan.jar
                                         java -jar pipeline-scan.jar --veracode_api_id '${VERACODE_API_ID}' \
                                             --veracode_api_key '${VERACODE_API_KEY}' \
-                                            --file target/verademo.war --issue_details true
+                                            --file target/verademo.war --issue_details true --verbose --fail_on_severity="Very High, High" --fail_on_criteria="79,89,113"
                                         """
                             }
                             else {
@@ -130,7 +130,7 @@ pipeline {
                                             Expand-Archive -Path pipeline-scan.zip -DestinationPath veracode_scanner
                                             java -jar veracode_scanner\\pipeline-scan.jar --veracode_api_id '${VERACODE_API_ID}' \
                                             --veracode_api_key '${VERACODE_API_KEY}' \
-                                            --file target/verademo.war --issue_details true
+                                            --file target/verademo.war --issue_details true --verbose --fail_on_severity="Very High, High" --fail_on_criteria="79,89,113"
                                             """
                             }
                         } catch (err) {
