@@ -14,7 +14,7 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '20', artifactNumToKeepStr: '20'))
     }
 
-    stages{
+    stages {
         stage ('environment verify') {
             steps {
                 script {
