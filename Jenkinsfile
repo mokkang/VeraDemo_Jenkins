@@ -11,8 +11,8 @@ pipeline {
 
     // this is optional on Linux, if jenkins does not have access to your locally installed docker
     //tools {
-        // these match up with 'Manage Jenkins -> Global Tool Config'
-        //'org.jenkinsci.plugins.docker.commons.tools.DockerTool' 'docker-latest' 
+    // these match up with 'Manage Jenkins -> Global Tool Config'
+    //'org.jenkinsci.plugins.docker.commons.tools.DockerTool' 'docker-latest' 
     //}
 
     options {
@@ -64,14 +64,14 @@ pipeline {
                 }
 
                 echo 'Veracode scanning'
-                withCredentials([ usernamePassword ( 
-                    credentialsId: 'veracode_login', usernameVariable: 'VERACODE_API_ID', passwordVariable: 'VERACODE_API_KEY') ]) {
-                        // fire-and-forget 
-                        veracode applicationName: "${VERACODE_APP_NAME}", criticality: 'VeryHigh', debug: true, fileNamePattern: '', pHost: '', pPassword: '', pUser: '', replacementPattern: '', sandboxName: '', scanExcludesPattern: '', scanIncludesPattern: '', scanName: "${BUILD_TAG}-${env.HOST_OS}", uploadExcludesPattern: '', uploadIncludesPattern: 'target/verademo.war', vid: "${VERACODE_API_ID}", vkey: "${VERACODE_API_KEY}"
+                withCredentials([ usernamePassword (
+                        credentialsId: 'veracode_login', usernameVariable: 'VERACODE_API_ID', passwordVariable: 'VERACODE_API_KEY') ]) {
+                    // fire-and-forget 
+                    veracode applicationName: "${VERACODE_APP_NAME}", criticality: 'VeryHigh', debug: true, fileNamePattern: '', pHost: '', pPassword: '', pUser: '', replacementPattern: '', sandboxName: '', scanExcludesPattern: '', scanIncludesPattern: '', scanName: "${BUILD_TAG}-${env.HOST_OS}", uploadExcludesPattern: '', uploadIncludesPattern: 'target/verademo.war', vid: "${VERACODE_API_ID}", vkey: "${VERACODE_API_KEY}"
 
-                        // wait for scan to complete (timeout: x)
-                        //veracode applicationName: '${VERACODE_APP_NAME}'', criticality: 'VeryHigh', debug: true, timeout: 20, fileNamePattern: '', pHost: '', pPassword: '', pUser: '', replacementPattern: '', sandboxName: '', scanExcludesPattern: '', scanIncludesPattern: '', scanName: "${BUILD_TAG}", uploadExcludesPattern: '', uploadIncludesPattern: 'target/verademo.war', vid: '${VERACODE_API_ID}', vkey: '${VERACODE_API_KEY}'
-                    }      
+                    // wait for scan to complete (timeout: x)
+                    //veracode applicationName: '${VERACODE_APP_NAME}'', criticality: 'VeryHigh', debug: true, timeout: 20, fileNamePattern: '', pHost: '', pPassword: '', pUser: '', replacementPattern: '', sandboxName: '', scanExcludesPattern: '', scanIncludesPattern: '', scanName: "${BUILD_TAG}", uploadExcludesPattern: '', uploadIncludesPattern: 'target/verademo.war', vid: '${VERACODE_API_ID}', vkey: '${VERACODE_API_KEY}'
+                }
             }
         }
 
@@ -101,21 +101,43 @@ pipeline {
             }
         }
 
-        // only works on *nix, as we're building a Linux image
-        //  uses the natively installed docker
-        stage ('Deploy') {
-            when { expression { return (isUnix() == true) } }
+        stage ('Veracode pipeline scan') {
             steps {
-                echo 'building Docker image'
-                sh 'docker version'
+                echo 'Veracode Pipeline scanning'
+                withCredentials([ usernamePassword (
+                        credentialsId: 'veracode_login', usernameVariable: 'VERACODE_API_ID', passwordVariable: 'VERACODE_API_KEY') ]) {
+                    script {
 
-                ansiColor('xterm') {
-                    sh 'docker build -t verademo:${BUILD_TAG} .'
+                        // this try-catch block will show the flaws in the Jenkins log, and yet not
+                        // fail the build due to any flaws reported in the pipeline scan
+                        // alternately, you could add --fail_on_severity '', but that would not show the
+                        // flaws in the Jenkins log
+
+                        // issue_details true: add flaw details to the results.json file
+                        try {
+                            if(isUnix() == true) {
+                                sh """
+                                        curl -sO https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip
+                                        unzip pipeline-scan-LATEST.zip pipeline-scan.jar
+                                        java -jar pipeline-scan.jar --veracode_api_id '${VERACODE_API_ID}' \
+                                            --veracode_api_key '${VERACODE_API_KEY}' \
+                                            --file target/verademo.war --issue_details true
+                                        """
+                            }
+                            else {
+                                powershell """
+                                            curl  https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip -o pipeline-scan.zip
+                                            Expand-Archive -Path pipeline-scan.zip -DestinationPath veracode_scanner
+                                            java -jar veracode_scanner\\pipeline-scan.jar --veracode_api_id '${VERACODE_API_ID}' \
+                                            --veracode_api_key '${VERACODE_API_KEY}' \
+                                            --file target/verademo.war --issue_details true
+                                            """
+                            }
+                        } catch (err) {
+                            echo 'Pipeline err: ' + err
+                        }
+                    }
                 }
-                
-                // split into separate stage??
-                echo 'Deploying ...'
-        
             }
         }
     }
