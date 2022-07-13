@@ -14,6 +14,8 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '20', artifactNumToKeepStr: '20'))
     }
 
+// * This is the beginning of Environmental Variable Verification and working directory confirmation.
+ 
     stages {
         stage ('environment verify') {
             steps {
@@ -30,7 +32,10 @@ pipeline {
                 }
             }
         }
-
+// ##############################################################################################################################
+// This Stage of the Pipeline is to build the Java application using Maven as compiler in Jenkins. 
+// IF statement is to check if the operating system is in Linux/Unix or Windows environment to compile Java application.
+// ##############################################################################################################################
         stage ('build') {
             steps {
                 // use the Maven plugin
@@ -46,6 +51,9 @@ pipeline {
                 }
             }
         }
+// ################################################################################################################################
+// This Stage defines Veracode's Static Pipeline Scan within the Jenkins CI
+// ################################################################################################################################
 
         stage ('Veracode pipeline scan') {
             steps {
@@ -58,8 +66,9 @@ pipeline {
                             // fail the build due to any flaws reported in the pipeline scan
                             // alternately, you could add --fail_on_severity '', but that would not show the
                             // flaws in the Jenkins log
-
-                            // issue_details true: add flaw details to the results.json file
+                            // #######################################################################################################################################
+                            // Once again, this <try:if> statement is to check if the script was to run on Unix/Linux or Windows. Chose to run Linux command instead
+                            // #######################################################################################################################################
                             try {
                                 if(isUnix() == true) {
                                     sh """
@@ -70,15 +79,7 @@ pipeline {
                                             --file target/verademo.war --issue_details true
                                         """
                                 }
-                                else {
-                                    powershell """
-                                            curl  https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip -o pipeline-scan.zip
-                                            Expand-Archive -Path pipeline-scan.zip -DestinationPath veracode_scanner
-                                            java -jar veracode_scanner\\pipeline-scan.jar --veracode_api_id '${VERACODE_API_ID}' \
-                                            --veracode_api_key '${VERACODE_API_KEY}' \
-                                            --file target/verademo.war --issue_details true
-                                            """
-                                }
+                                
                             } catch (err) {
                                 echo 'Pipeline err: ' + err
                             }
