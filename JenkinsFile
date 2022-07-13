@@ -1,0 +1,51 @@
+pipeline {
+  agent any
+  
+  environment {
+    VERACODE_APP_NAME = 'veraDEMO'
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '20', artifactNumToKeepStr: '20'))
+  }
+  
+  stages{
+  
+    stage ('build') {
+      stops {
+        withMaven(maven:'maven-3') {
+          script {
+            dir('app') {
+              sh 'mvn clean package -f app/pom.xml'
+            }
+          }
+        }
+      }
+    }
+  }
+    withCredentials([ usernamePassword ( 
+                    credentialsId: 'veracode_login', usernameVariable: 'VERACODE_API_ID', passwordVariable: 'VERACODE_API_KEY') ]) {
+                        // fire-and-forget 
+                        veracode applicationName: "${VERACODE_APP_NAME}", criticality: 'VeryHigh', debug: false, fileNamePattern: '', pHost: '', pPassword: '', pUser: '', replacementPattern: '', sandboxName: '', scanExcludesPattern: '', scanIncludesPattern: '', scanName: "${BUILD_TAG}-${env.HOST_OS}", uploadExcludesPattern: '', uploadIncludesPattern: 'app/target/verademo.war', vid: "${VERACODE_API_ID}", vkey: "${VERACODE_API_KEY}"
+  
+    }
+  }
+}
+
+
+  stage ('Veracode SCA') {
+    steps {
+      echo 'Veracode SCA'
+      withCredentials([ string(credentialsId: 'SCA_Token', variable: 'SRCCLR_API_TOKEN')]} {
+        withMaven(maven:'maven-3') {
+          script {
+            sh '''
+                export SCAN_DIR="./app"
+                curl -sSL https://download.sourceclear.com/ci.sh | bash -s scan --update-advisor 
+            '''
+          }
+        }
+      }
+      }
+    }
+    }
+  }
