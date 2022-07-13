@@ -27,7 +27,6 @@ pipeline {
                         veracode applicationName: "${VERACODE_APP_NAME}", criticality: 'VeryHigh', debug: true, fileNamePattern: '', 
     }
   }
-}
             stage ('Veracode SCA') {
             steps {
                 echo 'Veracode SCA'
