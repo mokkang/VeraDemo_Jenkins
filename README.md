@@ -6,6 +6,7 @@ This project is designed to show the complete SDLC with all of our Veracode tool
 * Veracode scanning of first party code
 * Veracode SCA scanning of third-party code
 * building a Docker image for deployment and Veracode dynamic scanning (*nix only)
+* 
 
 This is a Veracode-specific readme file.  For the original, see readme-original.md.
 
