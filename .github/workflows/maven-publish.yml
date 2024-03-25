@@ -4,7 +4,7 @@
 name: Maven Package
 
 on:
-  pull-request:
+  pull_request:
 
 jobs:
   build:
@@ -38,7 +38,7 @@ jobs:
         # filepath
         filepath: ./app/target/verademo.war
         # version
-        version: {{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
+        version: ${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
         # vid
         vid: ${{ secrets.VERACODE_API_ID }} 
         # vkey
