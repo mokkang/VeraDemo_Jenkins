@@ -3,7 +3,7 @@
 This project is designed to show the complete SDLC with all of our Veracode tools used at the appropriate places in the build process.  This complete process will include:
 
 * building and packaging the app for scanning
-* Veracode scanning of first party code
+* Veracode scanning of first party code 
 * Veracode SCA scanning of third-party code
 * building a Docker image for deployment and Veracode dynamic scanning (*nix only)
 
