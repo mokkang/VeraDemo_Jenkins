@@ -31,14 +31,13 @@ jobs:
       # uses: veracode/veracode-uploadandscan-action@98e2a2941b985e55bfe469ebcb970b2e686625e4
       uses: veracode/veracode-uploadandscan-action@0.2.6
       with:
-        # appname
         appname: VeraDemo-Sandbox-Merge-Master # default is ${{ github.repository }}
         # createprofile
         createprofile: true # default is true
         # filepath
         filepath: ./app/target/verademo.war
         # version
-        version: {{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
+        version: ${{ github.run_number }}-${{ github.run_attempt }}
         # vid
         vid: ${{ secrets.VERACODE_API_ID }} 
         # vkey
